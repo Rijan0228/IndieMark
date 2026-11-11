@@ -52,35 +52,9 @@ function showToast(message) {
 -------------------------------------------------- */
 
 function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onupgradeneeded = () => {
-      const d = request.result;
-
-      if (!d.objectStoreNames.contains("records")) {
-        d.createObjectStore("records", {
-          keyPath: "id"
-        });
-      }
-
-      if (!d.objectStoreNames.contains("recipients")) {
-        d.createObjectStore("recipients", {
-          keyPath: "id"
-        });
-      }
-
-      if (!d.objectStoreNames.contains("cases")) {
-        d.createObjectStore("cases", {
-          keyPath: "id"
-        });
-      }
-    };
-
-    request.onsuccess = () => resolve(request.result);
-
-    request.onerror = () => reject(request.error);
-  });
+  const database = globalThis.IndieMarkModules?.Database;
+  if (database) return database.open(DB_NAME);
+  return Promise.reject(new Error("Database module did not load."));
 }
 
 function store(name, mode = "readonly") {
@@ -129,6 +103,10 @@ function clearStore(name) {
 -------------------------------------------------- */
 
 function makeId() {
+  const distribution = globalThis.IndieMarkModules?.Distribution;
+  if (distribution && globalThis.IndieMark?.WatermarkCore) {
+    return distribution.newRecordId(globalThis.IndieMark.WatermarkCore);
+  }
   if (globalThis.IndieMark?.WatermarkCore) {
     return globalThis.IndieMark.WatermarkCore.createId();
   }
@@ -292,7 +270,11 @@ function setMedia(file) {
 }
 
 $("quickRecipientAdd").addEventListener("click", async () => {
-  const name = $("quickRecipientName").value.trim();
+  const recipientTools = globalThis.IndieMarkModules?.Recipients;
+  let name = $("quickRecipientName").value.trim();
+  if (recipientTools) {
+    try { name = recipientTools.normalize(name); } catch (error) { showToast(error.message); return; }
+  }
   if (!name) {
     showToast("Enter a recipient name first");
     $("quickRecipientName").focus();
@@ -501,7 +483,8 @@ function renderRows(records) {
     </button>
   `;
 
-  const sortedRecords = [...records].sort(
+  const vaultTools = globalThis.IndieMarkModules?.EvidenceVault;
+  const sortedRecords = vaultTools ? vaultTools.sort(records) : [...records].sort(
     (a, b) => b.createdAt.localeCompare(a.createdAt)
   );
 
@@ -831,13 +814,12 @@ $("analyzeSuspect").addEventListener("click", async () => {
       }
     }
 
-    const watermarkMatch = recovered
-      ? records.find(record => record.id === recovered.id)
-      : null;
-
-    const exactMatch = records.find(record =>
-      record.sha256 === hash || record.watermarkedSha256 === hash
-    );
+    const detectorTools = globalThis.IndieMarkModules?.LeakDetector;
+    const matched = detectorTools
+      ? detectorTools.match(records, recovered, hash)
+      : { watermark: recovered ? records.find(record => record.id === recovered.id) : null, exact: records.find(record => record.sha256 === hash || record.watermarkedSha256 === hash) };
+    const watermarkMatch = matched.watermark;
+    const exactMatch = matched.exact;
 
     const match = watermarkMatch || exactMatch;
     const box = $("detectorResult");
@@ -972,7 +954,8 @@ $("runLab").addEventListener("click", async () => {
   try{
     const engine=globalThis.IndieMark?.ImageEngine;
     if(!engine)throw new Error("Image engine did not load.");
-    const baseline=await engine.extract(labFile);
+    const labTools=globalThis.IndieMarkModules?.ResilienceLab;
+    const baseline=labTools ? await labTools.recoverImage(engine,labFile) : await engine.extract(labFile);
     if(!baseline.found||!baseline.payload?.id){
       $("labBaseline").textContent="Baseline failed: no recoverable IndieMark prototype watermark was found.";
       $("labStatus").textContent="BASELINE FAILED";$("labSummary").textContent="No transformation tests were run";
@@ -1022,15 +1005,14 @@ async function exportData() {
 
     records: await all("records"),
     recipients: await all("recipients"),
-    cases: await all("cases")
+    cases: await all("cases"),
+    summary: globalThis.IndieMarkModules?.ReportGenerator?.summary(await all("records")) || null
   };
 
-  const blob = new Blob(
-    [JSON.stringify(data, null, 2)],
-    {
-      type: "application/json"
-    }
-  );
+  const backupTools = globalThis.IndieMarkModules?.Backup;
+  const blob = backupTools
+    ? backupTools.create(data)
+    : new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
 
   const url = URL.createObjectURL(blob);
 
