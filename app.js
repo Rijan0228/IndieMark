@@ -2,7 +2,6 @@
 /* IndieMark — local-first media distribution and experimental watermark workspace. */
 
 const DB_NAME = "IndieMarkLocal";
-const DB_VERSION = 1;
 
 let db;
 let selectedMedia = null;
@@ -377,8 +376,6 @@ async function refresh() {
    SAVED PROTECTED FILES
 -------------------------------------------------- */
 
-const protectedFileUrls = new Map();
-
 function renderProtectedFiles(files) {
   const container = $("protectedFiles");
   if (!container) return;
@@ -599,7 +596,8 @@ function renderRows(records) {
         return;
       }
 
-      await remove("records", button.dataset.deleteRecord);
+      const recordId = button.dataset.deleteRecord;
+      await Promise.all([remove("records", recordId), remove("files", recordId)]);
 
       await refresh();
 
@@ -1084,7 +1082,8 @@ async function exportData() {
 
   link.click();
 
-  URL.revokeObjectURL(url);
+  link.addEventListener("click", () => setTimeout(() => URL.revokeObjectURL(url), 1500), { once: true });
+  link.click();
 
   showToast("Backup exported");
 }
@@ -1110,7 +1109,8 @@ $("clearData").addEventListener("click", async () => {
   await Promise.all([
     clearStore("records"),
     clearStore("recipients"),
-    clearStore("cases")
+    clearStore("cases"),
+    clearStore("files")
   ]);
 
   await refresh();
