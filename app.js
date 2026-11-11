@@ -177,16 +177,19 @@ function go(page) {
   });
 }
 
-document.querySelectorAll("[data-page]").forEach(button => {
-  button.addEventListener("click", () => {
-    go(button.dataset.page);
-  });
-});
+document.addEventListener("click", event => {
+  const pageButton = event.target.closest("[data-page]");
+  if (pageButton) {
+    event.preventDefault();
+    go(pageButton.dataset.page);
+    return;
+  }
 
-document.querySelectorAll("[data-go]").forEach(button => {
-  button.addEventListener("click", () => {
-    go(button.dataset.go);
-  });
+  const goButton = event.target.closest("[data-go]");
+  if (goButton) {
+    event.preventDefault();
+    go(goButton.dataset.go);
+  }
 });
 
 $("mobileMenu").addEventListener("click", () => {
@@ -605,11 +608,6 @@ function renderRows(records) {
     });
   });
 
-  document.querySelectorAll("[data-go]").forEach(button => {
-    button.addEventListener("click", () => {
-      go(button.dataset.go);
-    });
-  });
 }
 
 
@@ -675,7 +673,9 @@ $("addRecipient").addEventListener("click", async () => {
    CREATE DISTRIBUTION RECORD
 -------------------------------------------------- */
 
-$("createRecord").addEventListener("click", async () => {
+let creatingRecord = false;
+
+async function createDistributionRecord() {
   if (!selectedMedia) {
     showToast("Choose a media file first");
     $("mediaInput").click();
@@ -821,6 +821,23 @@ $("createRecord").addEventListener("click", async () => {
   $("customLabel").value = "";
 
   go("vault");
+
+}
+
+$("createRecord").addEventListener("click", async () => {
+  if (creatingRecord) return;
+  creatingRecord = true;
+  const button = $("createRecord");
+  button.disabled = true;
+
+  try {
+    await createDistributionRecord();
+  } catch (error) {
+    showToast("Could not create record: " + (error.message || "Unknown error"));
+  } finally {
+    creatingRecord = false;
+    button.disabled = !selectedMedia;
+  }
 });
 
 
