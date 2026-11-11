@@ -1,0 +1,2 @@
+/* IndieMark video worker: metadata probe; no container rewriting is performed. */
+self.onmessage=async e=>{const {id,file}=e.data||{};try{if(!(file instanceof Blob))throw Error("A video File or Blob is required.");self.postMessage({id,ok:true,result:{bytes:file.size,type:file.type,note:"Frame extraction and container encoding are not performed by this worker."}});}catch(error){self.postMessage({id,ok:false,error:error.message});}};
