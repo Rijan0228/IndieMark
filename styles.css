@@ -1461,3 +1461,5 @@ button {
 
 .legal-links a{color:var(--accent,#a99bff);text-decoration:none}.legal-links a:hover{text-decoration:underline}
 .form-panel .button.full{display:flex;width:100%;min-height:48px;justify-content:center;margin-top:18px;position:relative;z-index:1}
+
+.next-step-panel{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:18px 0;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}.next-step-panel h3{margin:5px 0}.next-step-panel p{margin:0;color:var(--muted);font-size:13px;line-height:1.55;max-width:620px}@media(max-width:640px){.next-step-panel{align-items:stretch;flex-direction:column}.next-step-panel .button{width:100%;justify-content:center}}
