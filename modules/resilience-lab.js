@@ -1,0 +1,1 @@
+(function(r){"use strict";r.ResilienceLab={async recoverImage(engine,file){if(!engine||!file)throw Error("Image engine and file are required.");return engine.extract(file);}};})(globalThis.IndieMarkModules=globalThis.IndieMarkModules||{});
