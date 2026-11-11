@@ -1,0 +1,1 @@
+(function(r){"use strict";r.Distribution={create(core,details){if(!core)throw Error("WatermarkCore unavailable.");return core.createPayload(details);},newRecordId(core){return core.createId();}};})(globalThis.IndieMarkModules=globalThis.IndieMarkModules||{});
