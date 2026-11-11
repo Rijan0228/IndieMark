@@ -1081,9 +1081,7 @@ async function exportData() {
     `indiemark-backup-${new Date().toISOString().slice(0, 10)}.json`;
 
   link.click();
-
-  link.addEventListener("click", () => setTimeout(() => URL.revokeObjectURL(url), 1500), { once: true });
-  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
 
   showToast("Backup exported");
 }
