@@ -359,7 +359,10 @@ async function refresh() {
       </option>
     `).join("");
 
-  select.value = chosen;
+  // Preserve a valid selection. If none is selected, automatically select
+  // the only saved recipient so first-time users are not sent in circles.
+  const chosenExists = recipients.some(recipient => recipient.id === chosen);
+  select.value = chosenExists ? chosen : (recipients.length === 1 ? recipients[0].id : "");
 
   renderRows(records);
   renderRecipients(recipients, records);
@@ -605,19 +608,23 @@ $("addRecipient").addEventListener("click", async () => {
     return;
   }
 
-  await put("recipients", {
-    id: crypto.randomUUID(),
+  const recipient = {
+    id: makeId(),
     name,
     note: $("recipientNote").value.trim(),
     createdAt: nowISO()
-  });
+  };
+
+  await put("recipients", recipient);
 
   $("recipientName").value = "";
   $("recipientNote").value = "";
 
   await refresh();
+  $("recipientSelect").value = recipient.id;
+  go("studio");
 
-  showToast("Recipient added");
+  showToast("Recipient added and selected. Continue creating your record.");
 });
 
 
@@ -635,15 +642,22 @@ $("createRecord").addEventListener("click", async () => {
   const recipientId = $("recipientSelect").value;
 
   if (!recipientId) {
-    showToast("Add and select a recipient first");
-    go("recipients");
-    return;
+    const savedRecipients = await all("recipients");
+    if (savedRecipients.length === 1) {
+      $("recipientSelect").value = savedRecipients[0].id;
+    } else {
+      showToast("Choose a recipient from the dropdown above.");
+      $("recipientSelect").focus();
+      return;
+    }
   }
+
+  const selectedRecipientId = $("recipientSelect").value;
 
   const recipients = await all("recipients");
 
   const recipient = recipients.find(
-    item => item.id === recipientId
+    item => item.id === selectedRecipientId
   );
 
   if (!recipient) {
