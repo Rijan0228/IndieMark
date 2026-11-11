@@ -147,16 +147,11 @@ function makeId() {
 }
 
 async function sha256(file) {
+  const fingerprint = globalThis.IndieMarkModules?.Fingerprint;
+  if (fingerprint) return fingerprint.sha256(file);
   const data = await file.arrayBuffer();
-
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    data
-  );
-
-  return Array.from(new Uint8Array(digest))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 function escapeHTML(value = "") {
