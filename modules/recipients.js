@@ -1,0 +1,1 @@
+(function(r){"use strict";r.Recipients={normalize(name){const value=String(name||"").trim();if(!value)throw Error("Recipient name is required.");return value.slice(0,80);}};})(globalThis.IndieMarkModules=globalThis.IndieMarkModules||{});
