@@ -1,0 +1,1 @@
+(function(r){"use strict";r.EvidenceVault={sort(records){return [...(records||[])].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));},find(records,id){return (records||[]).find(x=>x.id===id)||null;}};})(globalThis.IndieMarkModules=globalThis.IndieMarkModules||{});
