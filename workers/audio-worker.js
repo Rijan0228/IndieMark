@@ -1,0 +1,2 @@
+/* IndieMark audio worker: WAV header inspection only; embedding stays in AudioEngine. */
+self.onmessage=async e=>{const {id,file}=e.data||{};try{if(!(file instanceof Blob))throw Error("A WAV File or Blob is required.");const b=new Uint8Array(await file.slice(0,64).arrayBuffer());const ascii=(o,n)=>String.fromCharCode(...b.slice(o,o+n));if(ascii(0,4)!=="RIFF"||ascii(8,4)!=="WAVE")throw Error("Not a RIFF/WAVE file.");self.postMessage({id,ok:true,result:{container:"RIFF/WAVE",bytes:file.size}});}catch(error){self.postMessage({id,ok:false,error:error.message});}};
