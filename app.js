@@ -97,6 +97,24 @@ function clearStore(name) {
   });
 }
 
+function batchWrite(operations) {
+  return new Promise((resolve, reject) => {
+    const names = [...new Set(operations.map(item => item.store))];
+    const transaction = db.transaction(names, "readwrite");
+
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error || new Error("Database write failed."));
+    transaction.onabort = () => reject(transaction.error || new Error("Database write was cancelled."));
+
+    for (const item of operations) {
+      const objectStore = transaction.objectStore(item.store);
+      if (item.type === "put") objectStore.put(item.value);
+      else if (item.type === "delete") objectStore.delete(item.key);
+      else if (item.type === "clear") objectStore.clear();
+    }
+  });
+}
+
 
 /* --------------------------------------------------
    IDENTIFIERS AND FILE FINGERPRINTS
@@ -600,7 +618,10 @@ function renderRows(records) {
       }
 
       const recordId = button.dataset.deleteRecord;
-      await Promise.all([remove("records", recordId), remove("files", recordId)]);
+      await batchWrite([
+        { store: "records", type: "delete", key: recordId },
+        { store: "files", type: "delete", key: recordId }
+      ]);
 
       await refresh();
 
@@ -792,22 +813,28 @@ async function createDistributionRecord() {
       : null
   };
 
-  await put("records", record);
+  const writes = [{ store: "records", type: "put", value: record }];
 
   if (exportedFile) {
     const safeBaseName = (selectedMedia.name.replace(/\.[^.]+$/, "") || "media")
       .replace(/[^a-z0-9-_]+/gi, "-")
       .slice(0, 60);
     const outputName = safeBaseName + ((selectedMedia.type.startsWith("audio/") || /\.wav$/i.test(selectedMedia.name)) ? "-indiemark.wav" : "-indiemark.png");
-    await put("files", {
-      id: distributionId,
-      recordId: distributionId,
-      fileName: outputName,
-      mimeType: exportedFile.type || selectedMedia.type,
-      blob: exportedFile,
-      createdAt
+    writes.push({
+      store: "files",
+      type: "put",
+      value: {
+        id: distributionId,
+        recordId: distributionId,
+        fileName: outputName,
+        mimeType: exportedFile.type || selectedMedia.type,
+        blob: exportedFile,
+        createdAt
+      }
     });
   }
+
+  await batchWrite(writes);
 
   await refresh();
 
@@ -1130,11 +1157,11 @@ $("clearData").addEventListener("click", async () => {
     return;
   }
 
-  await Promise.all([
-    clearStore("records"),
-    clearStore("recipients"),
-    clearStore("cases"),
-    clearStore("files")
+  await batchWrite([
+    { store: "records", type: "clear" },
+    { store: "recipients", type: "clear" },
+    { store: "cases", type: "clear" },
+    { store: "files", type: "clear" }
   ]);
 
   await refresh();
