@@ -718,7 +718,7 @@ async function createDistributionRecord() {
   let watermarkStatus = "not_supported";
   let watermarkedHash = null;
 
-  if (selectedMedia.type.startsWith("audio/")) {
+  if (selectedMedia.type.startsWith("audio/") || /\.wav$/i.test(selectedMedia.name)) {
     const core = globalThis.IndieMark?.WatermarkCore;
     const audioEngine = globalThis.IndieMark?.AudioEngine;
     if (selectedMedia.type === "audio/wav" || /\.wav$/i.test(selectedMedia.name)) {
@@ -788,7 +788,7 @@ async function createDistributionRecord() {
 
     watermarkStatus,
     watermarkMethod: watermarkStatus === "embedded_experimental"
-      ? (selectedMedia.type.startsWith("audio/") ? "experimental-pcm-lsb" : "experimental-lsb")
+      ? ((selectedMedia.type.startsWith("audio/") || /\.wav$/i.test(selectedMedia.name)) ? "experimental-pcm-lsb" : "experimental-lsb")
       : null
   };
 
@@ -798,7 +798,7 @@ async function createDistributionRecord() {
     const safeBaseName = (selectedMedia.name.replace(/\.[^.]+$/, "") || "media")
       .replace(/[^a-z0-9-_]+/gi, "-")
       .slice(0, 60);
-    const outputName = safeBaseName + (selectedMedia.type.startsWith("audio/") ? "-indiemark.wav" : "-indiemark.png");
+    const outputName = safeBaseName + ((selectedMedia.type.startsWith("audio/") || /\.wav$/i.test(selectedMedia.name)) ? "-indiemark.wav" : "-indiemark.png");
     await put("files", {
       id: distributionId,
       recordId: distributionId,
@@ -867,6 +867,7 @@ $("analyzeSuspect").addEventListener("click", async () => {
     const records = await all("records");
 
     let recovered = null;
+    let recoveredMethod = null;
     let recoveryError = null;
 
     if (suspectFile.type.startsWith("image/") || suspectFile.type === "audio/wav" || /\.wav$/i.test(suspectFile.name)) {
@@ -877,6 +878,7 @@ $("analyzeSuspect").addEventListener("click", async () => {
           const result = await mediaEngine.extract(suspectFile);
           if (result.found && result.verified) {
             recovered = result.payload;
+            recoveredMethod = result.method || "experimental watermark";
           } else {
             recoveryError = result.reason || "No compatible watermark found.";
           }
@@ -909,7 +911,7 @@ $("analyzeSuspect").addEventListener("click", async () => {
         <br>
         Asset: ${escapeHTML(watermarkMatch.assetName || watermarkMatch.fileName)}
         <br>
-        Method: experimental PNG LSB
+        Method: ${escapeHTML(recoveredMethod || "experimental watermark")}
         <br><br>
         The payload checksum is valid and the ID matches a record in this browser.
         This is not a cryptographic signature and does not prove who published the file.
