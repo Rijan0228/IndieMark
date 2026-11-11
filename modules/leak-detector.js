@@ -1,0 +1,1 @@
+(function(r){"use strict";r.LeakDetector={match(records,payload,hash){return {watermark:payload?(records||[]).find(x=>x.id===payload.id)||null:null,exact:hash?(records||[]).find(x=>x.sha256===hash||x.watermarkedSha256===hash)||null:null};}};})(globalThis.IndieMarkModules=globalThis.IndieMarkModules||{});
