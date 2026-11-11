@@ -1452,3 +1452,9 @@ button {
  .lab-results{grid-template-columns:1fr}
  .lab-results-head{align-items:start;flex-direction:column}
 }
+
+/* Watermark Studio quick recipient controls */
+.quick-recipient{display:flex;gap:8px;margin-top:10px;align-items:center}
+.quick-recipient input{min-width:0;flex:1}
+.field-hint{display:block;margin-top:7px;color:var(--muted,#8b929c);font-size:12px;line-height:1.5}
+@media(max-width:520px){.quick-recipient{align-items:stretch}.quick-recipient .button{white-space:nowrap}}
