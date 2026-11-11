@@ -374,6 +374,47 @@ async function refresh() {
 
 
 /* --------------------------------------------------
+   SAVED PROTECTED FILES
+-------------------------------------------------- */
+
+const protectedFileUrls = new Map();
+
+function renderProtectedFiles(files) {
+  const container = $("protectedFiles");
+  if (!container) return;
+
+  for (const url of protectedFileUrls.values()) {
+    URL.revokeObjectURL(url);
+  }
+  protectedFileUrls.clear();
+
+  if (!files || files.length === 0) {
+    container.innerHTML = '<p class="fine-print">No protected files saved yet. Create a watermarked PNG or supported WAV in Watermark Studio.</p>';
+    return;
+  }
+
+  container.innerHTML = files
+    .slice()
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map(file => {
+      if (!file.blob) return "";
+      const url = URL.createObjectURL(file.blob);
+      protectedFileUrls.set(file.id, url);
+      return `
+        <div class="protected-file-row">
+          <div>
+            <b>${escapeHTML(file.fileName || "Protected media")}</b>
+            <small>${bytes(file.blob.size)} · Saved on this device</small>
+          </div>
+          <a class="button primary protected-download"
+             href="${url}"
+             download="${escapeHTML(file.fileName || "protected-media")}">Download</a>
+        </div>
+      `;
+    }).join("") || '<p class="fine-print">No downloadable protected files found.</p>';
+}
+
+/* --------------------------------------------------
    RECORD STATUS
 -------------------------------------------------- */
 
