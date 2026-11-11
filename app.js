@@ -291,6 +291,7 @@ function setMedia(file) {
 }
 
 $("quickRecipientAdd").addEventListener("click", async () => {
+  try {
   const recipientTools = globalThis.IndieMarkModules?.Recipients;
   let name = $("quickRecipientName").value.trim();
   if (recipientTools) {
@@ -307,6 +308,11 @@ $("quickRecipientAdd").addEventListener("click", async () => {
   $("recipientSelect").value = recipient.id;
   $("quickRecipientName").value = "";
   showToast("Recipient added and selected");
+
+  } catch (error) {
+    console.error(error);
+    showToast("Quick recipient add failed: " + (error.message || "Unknown error"));
+  }
 });
 $("quickRecipientName").addEventListener("keydown", event => {
   if (event.key === "Enter") { event.preventDefault(); $("quickRecipientAdd").click(); }
@@ -663,6 +669,7 @@ function renderRecipients(recipients, records) {
 }
 
 $("addRecipient").addEventListener("click", async () => {
+  try {
   const name = $("recipientName").value.trim();
 
   if (!name) {
@@ -687,6 +694,11 @@ $("addRecipient").addEventListener("click", async () => {
   go("studio");
 
   showToast("Recipient added and selected. Continue creating your record.");
+
+  } catch (error) {
+    console.error(error);
+    showToast("Recipient add failed: " + (error.message || "Unknown error"));
+  }
 });
 
 
