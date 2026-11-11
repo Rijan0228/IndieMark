@@ -214,18 +214,6 @@
    * Alpha is intentionally excluded.
    */
 
-  function getChannels(imageData) {
-    const channels = [];
-
-    for (let i = 0; i < imageData.data.length; i += 4) {
-      channels.push(i);
-      channels.push(i + 1);
-      channels.push(i + 2);
-    }
-
-    return channels;
-  }
-
   /*
    * Create the binary image watermark packet.
    *
@@ -299,16 +287,16 @@
       height
     );
 
-    const channels = getChannels(imageData);
+    const availableChannels = (imageData.data.length / 4) * 3;
 
-    if (packetBits.length > channels.length) {
+    if (packetBits.length > availableChannels) {
       throw new Error(
         "Image does not have enough capacity for this watermark. Use a larger image."
       );
     }
 
     for (let i = 0; i < packetBits.length; i++) {
-      const channelIndex = channels[i];
+      const channelIndex = Math.floor(i / 3) * 4 + (i % 3);
 
       const current = imageData.data[channelIndex];
 
@@ -350,19 +338,17 @@
    */
 
   async function readPacket(imageData, byteLength) {
-    const channels = getChannels(imageData);
+    const availableChannels = (imageData.data.length / 4) * 3;
+    const requiredBits = byteLength * 8 * REPETITIONS;
 
-    const requiredBits =
-      byteLength * 8 * REPETITIONS;
-
-    if (requiredBits > channels.length) {
+    if (requiredBits > availableChannels) {
       throw new Error("Image is too small.");
     }
 
     const repeated = [];
 
     for (let i = 0; i < requiredBits; i++) {
-      const channelIndex = channels[i];
+      const channelIndex = Math.floor(i / 3) * 4 + (i % 3);
 
       repeated.push(
         imageData.data[channelIndex] & 1
