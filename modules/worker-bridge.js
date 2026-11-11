@@ -1,0 +1,5 @@
+/* Small promise wrapper for the optional inspection workers. */
+(function(root){"use strict";
+function inspect(kind,file){const paths={image:"workers/image-worker.js",audio:"workers/audio-worker.js",video:"workers/video-worker.js"};const path=paths[kind];if(!path||typeof Worker==="undefined")return Promise.resolve(null);return new Promise((resolve,reject)=>{const worker=new Worker(path);const id=Date.now()+"-"+Math.random().toString(16).slice(2);worker.onmessage=e=>{worker.terminate();if(e.data.id!==id)return resolve(null);e.data.ok?resolve(e.data.result):reject(Error(e.data.error||"Worker inspection failed."));};worker.onerror=()=>{worker.terminate();reject(Error("Media inspection worker failed."));};worker.postMessage({id,file,task:"inspect"});});}
+root.IndieMarkModules=root.IndieMarkModules||{};root.IndieMarkModules.Workers={inspect};
+})(globalThis);
