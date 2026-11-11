@@ -19,7 +19,7 @@ No server, API key, Cloudflare Worker, or account connection is required. Media 
 - Experimental 16-bit PCM WAV watermark embedding and extraction.
 - Leak Detector for supported watermark recovery and exact hash matching.
 - Resilience Lab with actual PNG transformation/recovery attempts.
-- Recipients, Evidence Vault, local JSON backup, and report summaries.
+- Recipients, Evidence Vault with locally saved watermarked PNG/WAV downloads, metadata-only JSON backup, and report summaries.
 - Lightweight image/audio/video inspection workers.
 - Starter privacy, terms, copyright and security information pages.
 
@@ -33,7 +33,7 @@ The image and audio engines use experimental least-significant-bit (LSB) techniq
 
 ## Data and security
 
-Records are stored in IndexedDB in the browser profile. Clearing browser storage can remove them, so export backups when needed. The application does not upload selected media to an IndieMark server. This prototype has not undergone an independent security, privacy, or legal audit. Do not store sensitive personal information in it.
+Distribution records, recipients, investigations, and generated watermarked copies are stored in IndexedDB in the browser profile. Original source files are not retained. JSON backups contain metadata and hashes, not the generated media blobs. Clearing browser storage can remove local data, so export backups when needed. The application does not upload selected media to an IndieMark server. This prototype has not undergone an independent security, privacy, or legal audit. Do not store sensitive personal information in it.
 
 ## Project structure
 
