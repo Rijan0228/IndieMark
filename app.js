@@ -8,6 +8,7 @@ let db;
 let selectedMedia = null;
 let suspectFile = null;
 let previewUrl = null;
+const protectedFileUrls = new Map();
 let toastTimer;
 
 const $ = (id) => document.getElementById(id);
@@ -332,11 +333,13 @@ async function refresh() {
   const [
     records,
     recipients,
-    cases
+    cases,
+    files
   ] = await Promise.all([
     all("records"),
     all("recipients"),
-    all("cases")
+    all("cases"),
+    all("files")
   ]);
 
   $("statRecords").textContent = records.length;
@@ -366,6 +369,7 @@ async function refresh() {
 
   renderRows(records);
   renderRecipients(recipients, records);
+  renderProtectedFiles(files);
 }
 
 
@@ -755,22 +759,22 @@ $("createRecord").addEventListener("click", async () => {
     const safeBaseName = (selectedMedia.name.replace(/\.[^.]+$/, "") || "media")
       .replace(/[^a-z0-9-_]+/gi, "-")
       .slice(0, 60);
-
-    const url = URL.createObjectURL(exportedFile);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = safeBaseName + (selectedMedia.type.startsWith("audio/") ? "-indiemark.wav" : "-indiemark.png");
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    const outputName = safeBaseName + (selectedMedia.type.startsWith("audio/") ? "-indiemark.wav" : "-indiemark.png");
+    await put("files", {
+      id: distributionId,
+      recordId: distributionId,
+      fileName: outputName,
+      mimeType: exportedFile.type || selectedMedia.type,
+      blob: exportedFile,
+      createdAt
+    });
   }
 
   await refresh();
 
   showToast(
     exportedFile
-      ? "Watermarked copy downloaded. Next: open Leak Detector to verify it."
+      ? "Watermarked copy saved in Evidence Vault. Tap Download there, then open Leak Detector."
       : "Record saved. This format is currently metadata-only."
   );
 
