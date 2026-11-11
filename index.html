@@ -289,7 +289,7 @@
             <h1>Watermark Studio<span>.</span></h1>
 
             <p class="subheading">
-              Embed an experimental watermark in PNG-compatible images, or create a metadata-only record for other media.
+              Add your media, complete its details, choose a recipient, then create and download the protected copy.
             </p>
           </div>
 
@@ -352,8 +352,13 @@
               <label for="recipientSelect">Recipient</label>
 
               <select id="recipientSelect">
-                <option value="">Choose or add a recipient below</option>
+                <option value="">Choose a saved recipient</option>
               </select>
+              <div class="quick-recipient">
+                <input id="quickRecipientName" type="text" maxlength="80" placeholder="Or add a recipient name here">
+                <button class="button secondary" type="button" id="quickRecipientAdd">＋ Add</button>
+              </div>
+              <small class="field-hint">Add and select a recipient here — no need to leave this page.</small>
             </div>
 
 
@@ -371,13 +376,12 @@
 
 
             <button class="button primary full" id="createRecord" disabled>
-              Create distribution record <span>→</span>
+              Create record & continue <span>→</span>
             </button>
 
 
             <p class="fine-print">
-              PNG images receive an experimental watermark and download as a new PNG.
-              Audio and video currently create metadata-only records. Your source file is never overwritten.
+              PNG images and supported 16-bit PCM WAV files can receive experimental watermarks. Other media is recorded without embedding. Your source file is never overwritten.
             </p>
 
           </div>
