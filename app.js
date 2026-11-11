@@ -79,24 +79,6 @@ function put(name, value) {
   });
 }
 
-function remove(name, key) {
-  return new Promise((resolve, reject) => {
-    const request = store(name, "readwrite").delete(key);
-
-    request.onsuccess = resolve;
-    request.onerror = () => reject(request.error);
-  });
-}
-
-function clearStore(name) {
-  return new Promise((resolve, reject) => {
-    const request = store(name, "readwrite").clear();
-
-    request.onsuccess = resolve;
-    request.onerror = () => reject(request.error);
-  });
-}
-
 function batchWrite(operations) {
   return new Promise((resolve, reject) => {
     const names = [...new Set(operations.map(item => item.store))];
@@ -228,6 +210,11 @@ $("dismissNotice").addEventListener("click", () => {
 -------------------------------------------------- */
 
 function setMedia(file) {
+  if (creatingRecord) {
+    showToast("Please wait until the current record is saved.");
+    return;
+  }
+
   selectedMedia = file;
 
   $("fileInfo").textContent =
@@ -670,7 +657,9 @@ function renderRecipients(recipients, records) {
 
 $("addRecipient").addEventListener("click", async () => {
   try {
-  const name = $("recipientName").value.trim();
+  const recipientTools = globalThis.IndieMarkModules?.Recipients;
+  let name = $("recipientName").value.trim();
+  if (recipientTools) name = recipientTools.normalize(name);
 
   if (!name) {
     showToast("Enter a recipient name first");
@@ -680,7 +669,7 @@ $("addRecipient").addEventListener("click", async () => {
   const recipient = {
     id: makeId(),
     name,
-    note: $("recipientNote").value.trim(),
+    note: $("recipientNote").value.trim().slice(0, 200),
     createdAt: nowISO()
   };
 
