@@ -130,6 +130,10 @@ function clearStore(name) {
 -------------------------------------------------- */
 
 function makeId() {
+  if (globalThis.IndieMark?.WatermarkCore) {
+    return globalThis.IndieMark.WatermarkCore.createId();
+  }
+
   const randomBytes = new Uint8Array(6);
 
   crypto.getRandomValues(randomBytes);
@@ -641,10 +645,44 @@ $("createRecord").addEventListener("click", async () => {
     return;
   }
 
-  const hash = await sha256(selectedMedia);
+  const originalHash = await sha256(selectedMedia);
+  const distributionId = makeId();
+  const createdAt = nowISO();
+  const assetName = $("assetName").value.trim();
+  const label = $("customLabel").value.trim();
+
+  let exportedFile = null;
+  let watermarkStatus = "not_supported";
+  let watermarkedHash = null;
+
+  if (selectedMedia.type.startsWith("image/")) {
+    const core = globalThis.IndieMark?.WatermarkCore;
+    const imageEngine = globalThis.IndieMark?.ImageEngine;
+
+    if (!core || !imageEngine) {
+      showToast("Image engine did not load. Refresh and try again.");
+      return;
+    }
+
+    try {
+      const payload = core.createPayload({
+        id: distributionId,
+        label,
+        createdAt
+      });
+
+      const result = await imageEngine.embed(selectedMedia, payload);
+      exportedFile = result.blob;
+      watermarkedHash = await sha256(exportedFile);
+      watermarkStatus = "embedded_experimental";
+    } catch (error) {
+      showToast("Watermarking failed: " + error.message);
+      return;
+    }
+  }
 
   const record = {
-    id: makeId(),
+    id: distributionId,
 
     recipientId: recipient.id,
     recipientName: recipient.name,
@@ -653,25 +691,46 @@ $("createRecord").addEventListener("click", async () => {
     fileSize: selectedMedia.size,
     mimeType: selectedMedia.type,
 
-    assetName: $("assetName").value.trim(),
-    label: $("customLabel").value.trim(),
+    assetName,
+    label,
 
-    sha256: hash,
+    sha256: originalHash,
+    watermarkedSha256: watermarkedHash,
 
-    createdAt: nowISO(),
+    createdAt,
     sentAt: null,
 
     status: "prepared",
 
-    watermarkStatus: "not_embedded"
+    watermarkStatus,
+    watermarkMethod: watermarkStatus === "embedded_experimental"
+      ? "experimental-lsb"
+      : null
   };
 
   await put("records", record);
 
+  if (exportedFile) {
+    const safeBaseName = (selectedMedia.name.replace(/\\.[^.]+$/, "") || "image")
+      .replace(/[^a-z0-9-_]+/gi, "-")
+      .slice(0, 60);
+
+    const url = URL.createObjectURL(exportedFile);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = safeBaseName + "-indiemark.png";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
   await refresh();
 
   showToast(
-    "Distribution record created — no watermark embedded"
+    exportedFile
+      ? "Experimental watermarked PNG downloaded and record saved"
+      : "Metadata-only record saved — this media type is not watermarked yet"
   );
 
   $("assetName").value = "";
@@ -699,89 +758,115 @@ $("analyzeSuspect").addEventListener("click", async () => {
   }
 
   const button = $("analyzeSuspect");
-
   button.disabled = true;
   button.textContent = "Analyzing…";
 
   try {
     const hash = await sha256(suspectFile);
-
     const records = await all("records");
 
-    const match = records.find(
-      record => record.sha256 === hash
+    let recovered = null;
+    let recoveryError = null;
+
+    if (suspectFile.type.startsWith("image/")) {
+      try {
+        const imageEngine = globalThis.IndieMark?.ImageEngine;
+        if (imageEngine) {
+          const result = await imageEngine.extract(suspectFile);
+          if (result.found && result.verified) {
+            recovered = result.payload;
+          } else {
+            recoveryError = result.reason || "No compatible watermark found.";
+          }
+        } else {
+          recoveryError = "Image engine did not load.";
+        }
+      } catch (error) {
+        recoveryError = error.message;
+      }
+    }
+
+    const watermarkMatch = recovered
+      ? records.find(record => record.id === recovered.id)
+      : null;
+
+    const exactMatch = records.find(record =>
+      record.sha256 === hash || record.watermarkedSha256 === hash
     );
 
+    const match = watermarkMatch || exactMatch;
     const box = $("detectorResult");
-
     box.classList.remove("hidden", "mismatch");
 
-    if (match) {
+    if (recovered && watermarkMatch) {
+      box.innerHTML = `
+        <b>Experimental watermark recovered and matched.</b>
+        <br>
+        Distribution ID: ${escapeHTML(recovered.id)}
+        <br>
+        Recipient record: ${escapeHTML(watermarkMatch.recipientName)}
+        <br>
+        Asset: ${escapeHTML(watermarkMatch.assetName || watermarkMatch.fileName)}
+        <br>
+        Method: experimental PNG LSB
+        <br><br>
+        The payload checksum is valid and the ID matches a record in this browser.
+        This is not a cryptographic signature and does not prove who published the file.
+      `;
+    } else if (recovered) {
+      box.classList.add("mismatch");
+      box.innerHTML = `
+        <b>A compatible watermark payload was recovered, but no matching local record exists.</b>
+        <br>
+        Recovered ID: ${escapeHTML(recovered.id)}
+        <br>
+        Label: ${escapeHTML(recovered.label || "None")}
+        <br><br>
+        The checksum is an accidental-corruption check, not proof of authenticity or identity.
+      `;
+    } else if (exactMatch) {
       box.innerHTML = `
         <b>Exact file match found in your local register.</b>
         <br>
-
-        Distribution ID:
-        ${escapeHTML(match.id)}
-
+        Distribution ID: ${escapeHTML(exactMatch.id)}
         <br>
-
-        Recipient record:
-        ${escapeHTML(match.recipientName)}
-
+        Recipient record: ${escapeHTML(exactMatch.recipientName)}
         <br>
-
-        File:
-        ${escapeHTML(match.fileName)}
-
+        File: ${escapeHTML(exactMatch.fileName)}
         <br><br>
-
-        This is a SHA-256 file match, not a recovered watermark
-        or proof of who published it.
+        This is a SHA-256 file match, not a recovered watermark or proof of who published it.
       `;
     } else {
       box.classList.add("mismatch");
-
       box.innerHTML = `
-        <b>No exact SHA-256 match in this browser's register.</b>
-
+        <b>No watermark or exact file match was found.</b>
         <br>
-
-        File fingerprint:
-        ${hash}
-
+        File fingerprint: <code>${escapeHTML(hash)}</code>
         <br><br>
-
-        This does not mean the file is unwatermarked.
-        Watermark recovery is not implemented in this preview.
+        ${escapeHTML(recoveryError || "No compatible watermark was detected.")}
+        A failed recovery does not prove that the image has never been watermarked.
       `;
     }
 
     await put("cases", {
       id: crypto.randomUUID(),
-
       fileName: suspectFile.name,
       sha256: hash,
-
-      result: match
-        ? "exact_hash_match"
-        : "no_exact_hash_match",
-
+      result: recovered
+        ? (watermarkMatch ? "watermark_recovered_match" : "watermark_recovered_unmatched")
+        : (exactMatch ? "exact_hash_match" : "no_match"),
       matchedRecordId: match?.id || null,
-
+      recoveredDistributionId: recovered?.id || null,
       createdAt: nowISO()
     });
 
     await refresh();
 
   } catch (error) {
-    showToast(
-      "Could not analyze this file: " + error.message
-    );
+    showToast("Could not analyze this file: " + error.message);
   }
 
   button.disabled = false;
-
   button.innerHTML = 'Analyze file <span>→</span>';
 });
 
@@ -798,7 +883,7 @@ async function exportData() {
     exportedAt: nowISO(),
 
     notice:
-      "Local metadata backup only. Does not contain original media or embedded watermarks.",
+      "Local metadata backup only. Does not contain original media files. It includes distribution metadata and recorded hashes.",
 
     records: await all("records"),
     recipients: await all("recipients"),
