@@ -1142,8 +1142,34 @@ async function exportData() {
   }
 }
 
+async function exportDistributionReport() {
+  try {
+    const [records, recipients, cases] = await Promise.all([
+      all("records"),
+      all("recipients"),
+      all("cases")
+    ]);
+    const reportTools = globalThis.IndieMarkModules?.ReportGenerator;
+    if (!reportTools?.toHTML) throw new Error("Report generator did not load.");
+    const html = reportTools.toHTML({ records, recipients, cases });
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `indiemark-evidence-report-${new Date().toISOString().slice(0, 10)}.html`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    showToast("Evidence report exported");
+  } catch (error) {
+    console.error(error);
+    showToast("Report export failed: " + (error.message || "Unknown error"));
+  }
+}
+
 $("exportBackup").addEventListener("click", exportData);
-$("exportReport").addEventListener("click", exportData);
+$("exportReport").addEventListener("click", exportDistributionReport);
 $("settingsExport").addEventListener("click", exportData);
 
 
