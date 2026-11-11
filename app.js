@@ -875,6 +875,96 @@ $("analyzeSuspect").addEventListener("click", async () => {
    EXPORT LOCAL BACKUP
 -------------------------------------------------- */
 
+/* RESILIENCE LAB */
+let labFile = null;
+
+$("labInput").addEventListener("change", event => {
+  labFile = event.target.files[0] || null;
+  $("runLab").disabled = !labFile;
+  $("labResults").innerHTML = "";
+  $("labSummary").textContent = "Ready to run";
+  $("labBaseline").textContent = "Baseline check has not run.";
+  $("labFileMeta").textContent = labFile ? `${labFile.name} · ${bytes(labFile.size)}` : "No test image selected";
+  $("labStatus").textContent = labFile ? "IMAGE SELECTED" : "READY FOR TESTING";
+});
+
+function labCanvasBlob(canvas, type = "image/png", quality) {
+  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Could not create transformed image.")), type, quality));
+}
+
+async function labTransform(file, mode) {
+  const bitmap = await createImageBitmap(file);
+  let sx=0, sy=0, sw=bitmap.width, sh=bitmap.height;
+  let width=bitmap.width, height=bitmap.height, type="image/png", quality;
+  if(mode==="resize"){width=Math.max(1,Math.round(bitmap.width*.75));height=Math.max(1,Math.round(bitmap.height*.75));}
+  if(mode==="crop"){sw=Math.max(1,Math.round(bitmap.width*.9));sh=Math.max(1,Math.round(bitmap.height*.9));sx=Math.floor((bitmap.width-sw)/2);sy=Math.floor((bitmap.height-sh)/2);width=sw;height=sh;}
+  if(mode==="jpeg"){type="image/jpeg";quality=.82;}
+  const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+  const ctx=canvas.getContext("2d",{willReadFrequently:true});
+  if(!ctx){bitmap.close();throw new Error("Canvas is unavailable.");}
+  if(mode==="brightness")ctx.filter="brightness(1.12) contrast(1.04)";
+  if(mode==="grayscale")ctx.filter="grayscale(1)";
+  if(mode==="combined")ctx.filter="brightness(1.08) contrast(1.03)";
+  ctx.drawImage(bitmap,sx,sy,sw,sh,0,0,width,height);bitmap.close();
+  if(mode==="combined"){
+    const small=document.createElement("canvas");small.width=Math.max(1,Math.round(width*.8));small.height=Math.max(1,Math.round(height*.8));
+    small.getContext("2d").drawImage(canvas,0,0,small.width,small.height);
+    return labCanvasBlob(small,"image/jpeg",.82);
+  }
+  return labCanvasBlob(canvas,type,quality);
+}
+
+function labCard(name, detail, state, note) {
+  const cls=state==="recovered"?"good":state==="different"?"warn":"bad";
+  const label=state==="recovered"?"RECOVERED":state==="different"?"DIFFERENT ID":"NOT RECOVERED";
+  return `<article class="panel lab-result-card"><div class="lab-result-top"><div><b>${escapeHTML(name)}</b><small>${escapeHTML(detail)}</small></div><span class="lab-result-status ${cls}">${label}</span></div><p>${escapeHTML(note)}</p></article>`;
+}
+
+$("runLab").addEventListener("click", async () => {
+  if(!labFile)return;
+  const button=$("runLab");button.disabled=true;button.textContent="Checking baseline…";
+  $("labStatus").textContent="RUNNING";$("labBaseline").textContent="Checking original watermark…";$("labResults").innerHTML="";
+  try{
+    const engine=globalThis.IndieMark?.ImageEngine;
+    if(!engine)throw new Error("Image engine did not load.");
+    const baseline=await engine.extract(labFile);
+    if(!baseline.found||!baseline.payload?.id){
+      $("labBaseline").textContent="Baseline failed: no recoverable IndieMark prototype watermark was found.";
+      $("labStatus").textContent="BASELINE FAILED";$("labSummary").textContent="No transformation tests were run";
+      showToast("Choose a valid watermarked PNG first");return;
+    }
+    const id=baseline.payload.id;
+    $("labBaseline").textContent="Baseline passed · ID "+id+" · checksum valid (not creator authentication)";
+    const tests=[
+      ["Lossless PNG re-export","Canvas re-render · PNG","png"],
+      ["JPEG compression","JPEG · quality 82%","jpeg"],
+      ["Image resizing","75% dimensions · PNG","resize"],
+      ["Center crop","90% center crop · PNG","crop"],
+      ["Brightness & contrast","Brightness 112% · contrast 104%","brightness"],
+      ["Grayscale conversion","Grayscale filter · PNG","grayscale"],
+      ["Combined processing","Brightness · resize · JPEG","combined"]
+    ];
+    const cards=[];
+    for(let i=0;i<tests.length;i++){
+      const [name,detail,mode]=tests[i];button.textContent=`Testing ${i+1} of ${tests.length}…`;
+      try{
+        const transformed=await labTransform(labFile,mode);
+        const result=await engine.extract(transformed);
+        if(result.found&&result.payload?.id===id)cards.push(labCard(name,detail,"recovered","The baseline distribution ID was recovered."));
+        else if(result.found)cards.push(labCard(name,detail,"different","A payload was detected, but its ID did not match the baseline."));
+        else cards.push(labCard(name,detail,"failed",result.reason||"No valid payload was recovered."));
+      }catch(error){cards.push(labCard(name,detail,"failed",error.message||"Transformation or extraction failed."));}
+      $("labResults").innerHTML=cards.join("");
+    }
+    const count=cards.filter(card=>card.includes("RECOVERED")).length;
+    $("labSummary").textContent=`${count} of ${tests.length} transformations recovered the baseline ID`;
+    $("labStatus").textContent="TESTS COMPLETE";
+  }catch(error){
+    $("labBaseline").textContent="Test error: "+error.message;$("labStatus").textContent="TEST ERROR";showToast("Lab error: "+error.message);
+  }finally{button.disabled=!labFile;button.innerHTML='Run tests again <span>↻</span>';}
+});
+
+
 async function exportData() {
   const data = {
     product: "IndieMark",
