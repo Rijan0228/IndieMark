@@ -1,0 +1,17 @@
+/* IndieMark Video Frame Engine — experimental frame-level payload helper.
+ * This does NOT encode MP4/WebM containers. It embeds/retrieves a payload in
+ * supplied Canvas ImageData frames; a video decoder/encoder is a separate step.
+ */
+(function(root){"use strict";
+const MAGIC=[73,77,87,86],REPEAT=3,HEADER=8,MAX=4096;
+const core=()=>root.IndieMark?.WatermarkCore;
+function bytesToBits(bytes){const out=[];for(const b of bytes)for(let i=7;i>=0;i--)out.push((b>>i)&1);return out;}
+function bitsToBytes(bits){const out=new Uint8Array(bits.length/8);for(let i=0;i<out.length;i++){let v=0;for(let j=0;j<8;j++)v=(v<<1)|bits[i*8+j];out[i]=v;}return out;}
+function packet(payload){const c=core();if(!c||!c.validatePayload(payload))throw Error("A valid IndieMark payload and WatermarkCore are required.");const body=c.serialize(payload);if(body.length>MAX)throw Error("Payload too large.");const out=new Uint8Array(HEADER+body.length);out.set(MAGIC);new DataView(out.buffer).setUint32(4,body.length,false);out.set(body,HEADER);return out;}
+function channels(image){if(!image||!image.data||!Number.isInteger(image.width)||!Number.isInteger(image.height)||image.data.length!==image.width*image.height*4)throw Error("Expected valid RGBA ImageData.");return image.width*image.height*3;}
+function embedFrame(imageData,payload){const capacity=channels(imageData),raw=bytesToBits(packet(payload)),bits=[];for(const bit of raw)for(let n=0;n<REPEAT;n++)bits.push(bit);if(bits.length>capacity)throw Error("Frame is too small for this watermark payload.");const data=new Uint8ClampedArray(imageData.data);for(let i=0;i<bits.length;i++){const p=Math.floor(i/3)*4+i%3;data[p]=(data[p]&254)|bits[i];}return {imageData:new ImageData(data,imageData.width,imageData.height),method:"experimental-video-frame-lsb",distributionId:payload.id};}
+function extractFrame(imageData){try{const capacity=channels(imageData),data=imageData.data;function read(n){const count=n*8*REPEAT;if(count>capacity)throw Error("Frame too small.");const bits=[];for(let i=0;i<count;i+=REPEAT){let ones=0;for(let j=0;j<REPEAT;j++){const p=Math.floor((i+j)/3)*4+(i+j)%3;ones+=data[p]&1;}bits.push(ones>REPEAT/2?1:0);}return bitsToBytes(bits);}
+const h=read(HEADER);for(let i=0;i<4;i++)if(h[i]!==MAGIC[i])return {found:false,reason:"No IndieMark frame payload found."};const len=new DataView(h.buffer).getUint32(4,false);if(!len||len>MAX)return {found:false,reason:"Invalid frame payload length."};const all=read(HEADER+len),decoded=core().deserialize(all.slice(HEADER));if(!decoded.valid)return {found:false,reason:decoded.reason};return {found:true,payload:decoded.payload,method:"experimental-video-frame-lsb",verified:true,note:"Frame payload checksum passed; this is not proof of ownership."};}catch(e){return {found:false,reason:e.message||"Frame extraction failed."};}}
+function extractFromFrames(frames){let checked=0;for(const frame of frames||[]){checked++;const result=extractFrame(frame);if(result.found)return {...result,matchedFrame:checked,framesChecked:checked};}return {found:false,framesChecked:checked,reason:"No compatible watermark was recovered from the supplied frames."};}
+root.IndieMark=root.IndieMark||{};root.IndieMark.VideoEngine=Object.freeze({version:"0.1.0",supportedInput:"Canvas ImageData frames",containerEncoding:false,embedFrame,extractFrame,extractFromFrames});
+})(globalThis);
