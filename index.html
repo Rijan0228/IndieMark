@@ -638,119 +638,28 @@
 
 
       <!-- RESILIENCE LAB -->
-
       <section class="page" id="page-lab">
-
         <div class="page-heading">
-
-          <div>
-            <div class="eyebrow">MEASURE, DON'T GUESS</div>
-
-            <h1>Resilience Lab<span>.</span></h1>
-
-            <p class="subheading">
-              A test bench for measuring watermark survival under image
-              transformations.
-            </p>
-          </div>
-
-          <span class="status-chip pending">TEST ENGINE NOT READY</span>
-
+          <div><div class="eyebrow">MEASURE, DON'T GUESS</div><h1>Resilience Lab<span>.</span></h1><p class="subheading">Run real recovery checks after common image transformations.</p></div>
+          <span class="status-chip" id="labStatus">READY FOR TESTING</span>
         </div>
-
-
-        <div class="lab-grid">
-
-          <div class="panel lab-main">
-
-            <div class="lab-symbol">⌁</div>
-
-            <h3>Watermark resilience testing</h3>
-
-            <p>
-              The lab will test an actual embedded watermark against
-              transformations and attempt to recover its authenticated
-              distribution ID.
-            </p>
-
-
-            <div class="test-list">
-
-              <div><span>01</span> JPEG compression</div>
-              <div><span>02</span> Image resizing</div>
-              <div><span>03</span> Cropping</div>
-              <div><span>04</span> Format conversion</div>
-              <div><span>05</span> Screenshot-like processing</div>
-              <div><span>06</span> Brightness & contrast</div>
-              <div><span>07</span> Combined transformations</div>
-
-            </div>
-
-
-            <div class="engine-note">
-              <span>i</span>
-
-              <div>
-                <b>No placeholder scores</b>
-
-                <p>
-                  Tests will remain disabled until the real watermark embed
-                  and recovery engines are available.
-                </p>
-              </div>
-            </div>
-
-          </div>
-
-
-          <div class="panel lab-side">
-
-            <div class="eyebrow">TEST PHILOSOPHY</div>
-
-            <h3>What a result will mean</h3>
-
-
-            <div class="legend">
-              <i class="good"></i>
-
-              <div>
-                <b>Recovered</b>
-                <small>Authenticated ID recovered and matched.</small>
-              </div>
-            </div>
-
-
-            <div class="legend">
-              <i class="warn"></i>
-
-              <div>
-                <b>Partial</b>
-                <small>
-                  Some watermark data recovered, but no reliable match.
-                </small>
-              </div>
-            </div>
-
-
-            <div class="legend">
-              <i class="bad"></i>
-
-              <div>
-                <b>Not recovered</b>
-                <small>No reliable watermark recovery.</small>
-              </div>
-            </div>
-
-
-            <p class="fine-print">
-              Simulated transformations and real-world platform tests will
-              be labelled separately. No universal survival guarantee.
-            </p>
-
-          </div>
-
+        <div class="panel lab-upload-panel">
+          <div class="lab-upload-copy"><div class="eyebrow">TEST INPUT</div><h3>Choose a watermarked PNG</h3><p>Use the PNG downloaded from Watermark Studio. The lab checks the original first, then creates transformed copies locally in your browser.</p></div>
+          <label class="button secondary lab-file-button" for="labInput">Choose PNG</label>
+          <input id="labInput" type="file" accept="image/png,.png" hidden>
+          <div class="lab-file-meta" id="labFileMeta">No test image selected</div>
+          <div class="lab-baseline" id="labBaseline">Baseline check has not run.</div>
+          <button class="button primary" id="runLab" disabled>Run resilience tests <span>→</span></button>
         </div>
-
+        <div class="lab-results-head"><div><div class="eyebrow">MEASURED OUTCOMES</div><h2>Transformation results</h2></div><span class="fine-print" id="labSummary">No tests run yet</span></div>
+        <div class="lab-results" id="labResults"><div class="panel lab-empty"><div class="lab-symbol">⌁</div><b>Your test results will appear here</b><p>Select a watermarked PNG to begin. Every result comes from an actual extraction attempt.</p></div></div>
+        <div class="panel lab-side lab-disclaimer">
+          <div class="eyebrow">HOW TO READ THESE RESULTS</div>
+          <div class="legend"><i class="good"></i><div><b>Recovered</b><small>The payload was recovered and its ID matched the baseline ID.</small></div></div>
+          <div class="legend"><i class="warn"></i><div><b>Different / incomplete</b><small>A payload was detected, but it did not match the baseline ID.</small></div></div>
+          <div class="legend"><i class="bad"></i><div><b>Not recovered</b><small>The extraction engine could not recover a valid payload.</small></div></div>
+          <p class="fine-print">These are local prototype tests, not independent forensic validation. Canvas re-rendering is not a real screenshot, and results do not predict how every platform will process an image.</p>
+        </div>
       </section>
 
 
