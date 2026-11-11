@@ -288,6 +288,24 @@ function setMedia(file) {
     });
 }
 
+$("quickRecipientAdd").addEventListener("click", async () => {
+  const name = $("quickRecipientName").value.trim();
+  if (!name) {
+    showToast("Enter a recipient name first");
+    $("quickRecipientName").focus();
+    return;
+  }
+  const recipient = { id: makeId(), name, note: "Added from Watermark Studio", createdAt: nowISO() };
+  await put("recipients", recipient);
+  await refresh();
+  $("recipientSelect").value = recipient.id;
+  $("quickRecipientName").value = "";
+  showToast("Recipient added and selected");
+});
+$("quickRecipientName").addEventListener("keydown", event => {
+  if (event.key === "Enter") { event.preventDefault(); $("quickRecipientAdd").click(); }
+});
+
 $("mediaInput").addEventListener("change", event => {
   const file = event.target.files[0];
 
@@ -623,6 +641,8 @@ $("addRecipient").addEventListener("click", async () => {
 
 $("createRecord").addEventListener("click", async () => {
   if (!selectedMedia) {
+    showToast("Choose a media file first");
+    $("mediaInput").click();
     return;
   }
 
@@ -654,6 +674,27 @@ $("createRecord").addEventListener("click", async () => {
   let exportedFile = null;
   let watermarkStatus = "not_supported";
   let watermarkedHash = null;
+
+  if (selectedMedia.type.startsWith("audio/")) {
+    const core = globalThis.IndieMark?.WatermarkCore;
+    const audioEngine = globalThis.IndieMark?.AudioEngine;
+    if (selectedMedia.type === "audio/wav" || /\.wav$/i.test(selectedMedia.name)) {
+      if (!core || !audioEngine) {
+        showToast("Audio engine did not load. Refresh and try again.");
+        return;
+      }
+      try {
+        const payload = core.createPayload({ id: distributionId, label, createdAt });
+        const result = await audioEngine.embed(selectedMedia, payload);
+        exportedFile = result.blob;
+        watermarkedHash = await sha256(exportedFile);
+        watermarkStatus = "embedded_experimental";
+      } catch (error) {
+        showToast("WAV watermarking failed: " + error.message);
+        return;
+      }
+    }
+  }
 
   if (selectedMedia.type.startsWith("image/")) {
     const core = globalThis.IndieMark?.WatermarkCore;
@@ -704,21 +745,21 @@ $("createRecord").addEventListener("click", async () => {
 
     watermarkStatus,
     watermarkMethod: watermarkStatus === "embedded_experimental"
-      ? "experimental-lsb"
+      ? (selectedMedia.type.startsWith("audio/") ? "experimental-pcm-lsb" : "experimental-lsb")
       : null
   };
 
   await put("records", record);
 
   if (exportedFile) {
-    const safeBaseName = (selectedMedia.name.replace(/\\.[^.]+$/, "") || "image")
+    const safeBaseName = (selectedMedia.name.replace(/\\.[^.]+$/, "") || "media")
       .replace(/[^a-z0-9-_]+/gi, "-")
       .slice(0, 60);
 
     const url = URL.createObjectURL(exportedFile);
     const link = document.createElement("a");
     link.href = url;
-    link.download = safeBaseName + "-indiemark.png";
+    link.download = safeBaseName + (selectedMedia.type.startsWith("audio/") ? "-indiemark.wav" : "-indiemark.png");
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -729,8 +770,8 @@ $("createRecord").addEventListener("click", async () => {
 
   showToast(
     exportedFile
-      ? "Experimental watermarked PNG downloaded and record saved"
-      : "Metadata-only record saved — this media type is not watermarked yet"
+      ? "Watermarked copy downloaded. Next: open Leak Detector to verify it."
+      : "Record saved. This format is currently metadata-only."
   );
 
   $("assetName").value = "";
@@ -768,18 +809,19 @@ $("analyzeSuspect").addEventListener("click", async () => {
     let recovered = null;
     let recoveryError = null;
 
-    if (suspectFile.type.startsWith("image/")) {
+    if (suspectFile.type.startsWith("image/") || suspectFile.type === "audio/wav" || /\.wav$/i.test(suspectFile.name)) {
       try {
-        const imageEngine = globalThis.IndieMark?.ImageEngine;
-        if (imageEngine) {
-          const result = await imageEngine.extract(suspectFile);
+        const isWav = suspectFile.type === "audio/wav" || /\.wav$/i.test(suspectFile.name);
+        const mediaEngine = isWav ? globalThis.IndieMark?.AudioEngine : globalThis.IndieMark?.ImageEngine;
+        if (mediaEngine) {
+          const result = await mediaEngine.extract(suspectFile);
           if (result.found && result.verified) {
             recovered = result.payload;
           } else {
             recoveryError = result.reason || "No compatible watermark found.";
           }
         } else {
-          recoveryError = "Image engine did not load.";
+          recoveryError = "Matching media engine did not load.";
         }
       } catch (error) {
         recoveryError = error.message;
