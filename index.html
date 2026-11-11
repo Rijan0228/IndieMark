@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111214">
+  <meta name="description" content="IndieMark — private, browser-based media protection workspace.">
+
+  <title>IndieMark — Every copy has an identity</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <aside class="sidebar" id="sidebar">
+
+      <a class="brand" href="#" data-page="dashboard" aria-label="IndieMark home">
+        <span class="brand-mark">I<span>M</span></span>
+        <span class="brand-name">
+          indie<span>mark</span>
+          <small>MEDIA INTELLIGENCE</small>
+        </span>
+      </a>
+
+      <div class="workspace-label">WORKSPACE</div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">◫</span> Command Center
+        </button>
+
+        <button class="nav-item" data-page="studio">
+          <span class="nav-icon">✳</span> Watermark Studio
+          <i class="nav-dot"></i>
+        </button>
+
+        <button class="nav-item" data-page="detector">
+          <span class="nav-icon">⌕</span> Leak Detector
+        </button>
+
+        <button class="nav-item" data-page="recipients">
+          <span class="nav-icon">♧</span> Recipients
+        </button>
+
+        <button class="nav-item" data-page="vault">
+          <span class="nav-icon">▣</span> Evidence Vault
+        </button>
+
+        <button class="nav-item" data-page="lab">
+          <span class="nav-icon">⌁</span> Resilience Lab
+        </button>
+
+        <button class="nav-item" data-page="reports">
+          <span class="nav-icon">▤</span> Reports
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+
+        <div class="local-card">
+          <span class="pulse"></span>
+          <div>
+            <b>Local workspace</b>
+            <small>Your files stay in this browser</small>
+          </div>
+        </div>
+
+        <button class="nav-item" data-page="settings">
+          <span class="nav-icon">⚙</span> Settings
+        </button>
+
+        <div class="sidebar-foot">
+          INDIEMARK PREVIEW <span>v0.1.0</span>
+        </div>
+
+      </div>
+    </aside>
+
+
+    <main class="main">
+
+      <header class="topbar">
+
+        <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">
+          ☰
+        </button>
+
+        <div class="crumb">
+          <span>Workspace</span>
+          <b>/</b>
+          <strong id="pageCrumb">Command Center</strong>
+        </div>
+
+        <div class="top-actions">
+          <span class="secure-pill">
+            <i></i> LOCAL MODE
+          </span>
+
+          <button class="avatar" title="Local profile">IM</button>
+        </div>
+
+      </header>
+
+
+      <!-- COMMAND CENTER -->
+
+      <section class="page active" id="page-dashboard">
+
+        <div class="page-heading">
+
+          <div>
+            <div class="eyebrow">YOUR CREATIVE WORK, ACCOUNTED FOR</div>
+
+            <h1>Command Center<span>.</span></h1>
+
+            <p class="subheading">
+              A clear view of your media protection workspace.
+            </p>
+          </div>
+
+          <button class="button primary" data-go="studio">
+            ＋ New protection
+          </button>
+
+        </div>
+
+
+        <div class="notice">
+
+          <span class="notice-icon">i</span>
+
+          <div>
+            <b>Early access foundation</b>
+
+            <p>
+              IndieMark's workspace and local recordkeeping are ready.
+              Watermark embedding, recovery and online leak search are not
+              implemented yet. This preview will never pretend a file is
+              protected when it isn't.
+            </p>
+          </div>
+
+          <button class="notice-close" id="dismissNotice" aria-label="Dismiss">
+            ×
+          </button>
+
+        </div>
+
+
+        <div class="stats-grid">
+
+          <article class="stat-card">
+            <span class="stat-label">DISTRIBUTION RECORDS</span>
+            <strong id="statRecords">0</strong>
+            <small>Copies logged in this browser</small>
+            <span class="stat-symbol">↗</span>
+          </article>
+
+          <article class="stat-card">
+            <span class="stat-label">CONFIRMED SENT</span>
+            <strong id="statSent">0</strong>
+            <small>Manually confirmed deliveries</small>
+            <span class="stat-symbol">↗</span>
+          </article>
+
+          <article class="stat-card">
+            <span class="stat-label">RECIPIENTS</span>
+            <strong id="statRecipients">0</strong>
+            <small>Saved recipient labels</small>
+            <span class="stat-symbol">♧</span>
+          </article>
+
+          <article class="stat-card">
+            <span class="stat-label">INVESTIGATIONS</span>
+            <strong id="statCases">0</strong>
+            <small>Leak checks recorded</small>
+            <span class="stat-symbol">⌕</span>
+          </article>
+
+        </div>
+
+
+        <div class="section-row">
+
+          <div>
+            <div class="eyebrow">WORKSPACE ACTIVITY</div>
+            <h2>Recent distributions</h2>
+          </div>
+
+          <button class="button ghost" data-go="vault">
+            View vault <span>→</span>
+          </button>
+
+        </div>
+
+
+        <div class="panel table-panel">
+
+          <div class="table-head">
+            <span>IDENTITY</span>
+            <span>RECIPIENT</span>
+            <span>CREATED</span>
+            <span>STATUS</span>
+          </div>
+
+          <div id="recentRows" class="empty-state">
+
+            <div class="empty-icon">▤</div>
+
+            <b>No distribution records yet</b>
+
+            <p>
+              Your records will appear here when you add your first item.
+            </p>
+
+            <button class="button secondary" data-go="studio">
+              Open workspace
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div class="bottom-grid">
+
+          <article class="panel feature-panel">
+
+            <div class="feature-icon">✳</div>
+
+            <div>
+              <div class="eyebrow">NEXT STEP</div>
+
+              <h3>Build your first distribution record</h3>
+
+              <p>
+                Add a media file, assign a recipient and create a traceable
+                record. Watermark embedding will be added in the next engine
+                phase.
+              </p>
+
+              <button class="text-button" data-go="studio">
+                Open Watermark Studio →
+              </button>
+            </div>
+
+          </article>
+
+
+          <article class="panel privacy-panel">
+
+            <div class="eyebrow">PRIVACY BY DESIGN</div>
+
+            <h3>Processed in your browser</h3>
+
+            <p>
+              This foundation uses local browser storage. It does not upload
+              your selected media to an IndieMark server.
+            </p>
+
+            <div class="privacy-line">
+              <span class="pulse"></span>
+              Local-first workspace
+            </div>
+
+          </article>
+
+        </div>
+
+      </section>
+
+
+      <!-- WATERMARK STUDIO -->
+
+      <section class="page" id="page-studio">
+
+        <div class="page-heading">
+
+          <div>
+            <div class="eyebrow">CREATE A TRACEABLE DISTRIBUTION</div>
+
+            <h1>Watermark Studio<span>.</span></h1>
+
+            <p class="subheading">
+              Prepare a distribution record for an image, audio or video asset.
+            </p>
+          </div>
+
+          <span class="status-chip pending">ENGINE IN DEVELOPMENT</span>
+
+        </div>
+
+
+        <div class="two-col">
+
+          <div class="panel form-panel">
+
+            <div class="panel-title">
+              <span class="step">01</span>
+
+              <div>
+                <h3>Import your media</h3>
+                <p>
+                  Choose a file from your device. It stays in this browser
+                  session.
+                </p>
+              </div>
+            </div>
+
+
+            <label class="dropzone" for="mediaInput" id="dropzone">
+
+              <input
+                type="file"
+                id="mediaInput"
+                accept="image/jpeg,image/png,image/webp,audio/*,video/*"
+              >
+
+              <span class="upload-icon">↑</span>
+
+              <b>
+                Drop a file here or <u>browse files</u>
+              </b>
+
+              <small>
+                Images, audio and video · Browser-supported formats
+              </small>
+
+              <div id="fileInfo" class="file-info"></div>
+
+            </label>
+
+
+            <div class="field">
+              <label for="assetName">Asset / project name</label>
+
+              <input
+                id="assetName"
+                placeholder="e.g. Summer campaign — hero image"
+              >
+            </div>
+
+
+            <div class="field">
+              <label for="recipientSelect">Recipient</label>
+
+              <select id="recipientSelect">
+                <option value="">Choose or add a recipient below</option>
+              </select>
+            </div>
+
+
+            <div class="field">
+              <label for="customLabel">
+                Optional distribution label
+              </label>
+
+              <input
+                id="customLabel"
+                maxlength="60"
+                placeholder="e.g. Client preview · Round 1"
+              >
+            </div>
+
+
+            <button class="button primary full" id="createRecord" disabled>
+              Create distribution record <span>→</span>
+            </button>
+
+
+            <p class="fine-print">
+              Creating a record does not embed a watermark or alter your file.
+              That engine is a separate development phase.
+            </p>
+
+          </div>
+
+
+          <div class="panel preview-panel">
+
+            <div class="panel-title">
+              <span class="step">02</span>
+
+              <div>
+                <h3>Media preview</h3>
+                <p>Review the selected source asset.</p>
+              </div>
+            </div>
+
+
+            <div class="preview-stage" id="previewStage">
+
+              <div class="preview-empty">
+                <span>◈</span>
+                <b>Your media preview</b>
+                <small>Select a file to see it here</small>
+              </div>
+
+            </div>
+
+
+            <div class="preview-meta">
+              <span>FILE HASH</span>
+              <b id="previewHash">Not calculated</b>
+            </div>
+
+
+            <div class="engine-note">
+              <span>✧</span>
+
+              <div>
+                <b>Watermark engine not connected</b>
+
+                <p>
+                  We will add and validate the image engine before enabling
+                  protected-copy export.
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- LEAK DETECTOR -->
+
+      <section class="page" id="page-detector">
+
+        <div class="page-heading">
+
+          <div>
+            <div class="eyebrow">VERIFY A SUSPECTED COPY</div>
+
+            <h1>Leak Detector<span>.</span></h1>
+
+            <p class="subheading">
+              Prepare a local investigation record and compare file hashes.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="panel detector-panel">
+
+          <div class="detector-intro">
+
+            <div class="detector-mark">⌕</div>
+
+            <div>
+              <h3>Inspect a suspected media file</h3>
+
+              <p>
+                Choose a file to calculate its SHA-256 fingerprint and compare
+                it with hashes in your local vault.
+              </p>
+            </div>
+
+          </div>
+
+
+          <label class="dropzone compact" for="suspectInput">
+
+            <input
+              type="file"
+              id="suspectInput"
+              accept="image/*,audio/*,video/*"
+            >
+
+            <span class="upload-icon">↑</span>
+
+            <b>Choose suspected file</b>
+
+            <small>
+              Analysis is performed locally in your browser
+            </small>
+
+          </label>
+
+
+          <div id="detectorResult" class="result-box hidden"></div>
+
+
+          <button class="button primary" id="analyzeSuspect" disabled>
+            Analyze file <span>→</span>
+          </button>
+
+
+          <p class="fine-print">
+            A matching file hash identifies an identical file, not a watermark.
+            Watermark recovery and online searching are not available in this
+            foundation.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      <!-- RECIPIENTS -->
+
+      <section class="page" id="page-recipients">
+
+        <div class="page-heading">
+
+          <div>
+            <div class="eyebrow">PEOPLE & PROJECTS</div>
+
+            <h1>Recipients<span>.</span></h1>
+
+            <p class="subheading">
+              Keep recipient labels organized alongside your distribution
+              history.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="panel form-panel narrow">
+
+          <h3>Add a recipient</h3>
+
+          <div class="field">
+            <label for="recipientName">Name or label</label>
+
+            <input
+              id="recipientName"
+              placeholder="Client, studio or collaborator"
+            >
+          </div>
+
+
+          <div class="field">
+            <label for="recipientNote">Notes (optional)</label>
+
+            <input
+              id="recipientNote"
+              placeholder="Project or contact context"
+            >
+          </div>
+
+
+          <button class="button primary" id="addRecipient">
+            ＋ Add recipient
+          </button>
+
+        </div>
+
+
+        <div class="section-row">
+          <div>
+            <div class="eyebrow">SAVED CONTACTS</div>
+            <h2>Recipient register</h2>
+          </div>
+        </div>
+
+
+        <div id="recipientList" class="recipient-grid"></div>
+
+      </section>
+
+
+      <!-- EVIDENCE VAULT -->
+
+      <section class="page" id="page-vault">
+
+        <div class="page-heading">
+
+          <div>
+            <div class="eyebrow">YOUR LOCAL RECORDS</div>
+
+            <h1>Evidence Vault<span>.</span></h1>
+
+            <p class="subheading">
+              Distribution metadata and file fingerprints saved on this device.
+            </p>
+          </div>
+
+          <button class="button secondary" id="exportBackup">
+            Export backup ↓
+          </button>
+
+        </div>
+
+
+        <div class="vault-banner">
+
+          <span>▣</span>
+
+          <div>
+            <b>Metadata-only foundation</b>
+
+            <p>
+              This version stores record details and hashes, not your original
+              media files. Browser storage can be cleared by your device or
+              browser.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="panel table-panel">
+
+          <div class="table-head vault-head">
+            <span>DISTRIBUTION ID</span>
+            <span>ASSET</span>
+            <span>RECIPIENT</span>
+            <span>CREATED</span>
+            <span>STATUS</span>
+            <span></span>
+          </div>
+
+          <div id="vaultRows" class="empty-state">
+
+            <div class="empty-icon">▤</div>
+
+            <b>Your vault is empty</b>
+
+            <p>
+              Create a distribution record in Watermark Studio.
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- RESILIENCE LAB -->
+
+      <section class="page" id="page-lab">
+
+        <div class="page-heading">
+
+          <div>
+            <div class="eyebrow">MEASURE, DON'T GUESS</div>
+
+            <h1>Resilience Lab<span>.</span></h1>
+
+            <p class="subheading">
+              A test bench for measuring watermark survival under image
+              transformations.
+            </p>
+          </div>
+
+          <span class="status-chip pending">TEST ENGINE NOT READY</span>
+
+        </div>
+
+
+        <div class="lab-grid">
+
+          <div class="panel lab-main">
+
+            <div class="lab-symbol">⌁</div>
+
+            <h3>Watermark resilience testing</h3>
+
+            <p>
+              The lab will test an actual embedded watermark against
+              transformations and attempt to recover its authenticated
+              distribution ID.
+            </p>
+
+
+            <div class="test-list">
+
+              <div><span>01</span> JPEG compression</div>
+              <div><span>02</span> Image resizing</div>
+              <div><span>03</span> Cropping</div>
+              <div><span>04</span> Format conversion</div>
+              <div><span>05</span> Screenshot-like processing</div>
+              <div><span>06</span> Brightness & contrast</div>
+              <div><span>07</span> Combined transformations</div>
+
+            </div>
+
+
+            <div class="engine-note">
+              <span>i</span>
+
+              <div>
+                <b>No placeholder scores</b>
+
+                <p>
+                  Tests will remain disabled until the real watermark embed
+                  and recovery engines are available.
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+
+          <div class="panel lab-side">
+
+            <div class="eyebrow">TEST PHILOSOPHY</div>
+
+            <h3>What a result will mean</h3>
+
+
+            <div class="legend">
+              <i class="good"></i>
+
+              <div>
+                <b>Recovered</b>
+                <small>Authenticated ID recovered and matched.</small>
+              </div>
+            </div>
+
+
+            <div class="legend">
+              <i class="warn"></i>
+
+              <div>
+                <b>Partial</b>
+                <small>
+                  Some watermark data recovered, but no reliable match.
+                </small>
+              </div>
+            </div>
+
+
+            <div class="legend">
+              <i class="bad"></i>
+
+              <div>
+                <b>Not recovered</b>
+                <small>No reliable watermark recovery.</small>
+              </div>
+            </div>
+
+
+            <p class="fine-print">
+              Simulated transformations and real-world platform tests will
+              be labelled separately. No universal survival guarantee.
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- REPORTS -->
+
+      <section class="page" id="page-reports">
+
+        <div class="page-heading">
+
+          <div>
+            <div class="eyebrow">DOCUMENT YOUR WORK</div>
+
+            <h1>Reports<span>.</span></h1>
+
+            <p class="subheading">
+              Export a portable copy of your local distribution register.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="panel report-panel">
+
+          <div class="report-icon">▤</div>
+
+          <h3>Distribution register export</h3>
+
+          <p>
+            Download your distribution metadata as a JSON backup. It includes
+            IDs, recipient labels, timestamps and file hashes where available.
+          </p>
+
+          <button class="button primary" id="exportReport">
+            Export distribution report ↓
+          </button>
+
+          <p class="fine-print">
+            This is a technical activity record, not a certified forensic
+            report or proof of who published a file.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      <!-- SETTINGS -->
+
+      <section class="page" id="page-settings">
+
+        <div class="page-heading">
+
+          <div>
+            <div class="eyebrow">CONTROL YOUR WORKSPACE</div>
+
+            <h1>Settings<span>.</span></h1>
+
+            <p class="subheading">
+              Privacy, local data and workspace controls.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="settings-stack">
+
+
+          <div class="panel setting-row">
+
+            <div>
+              <h3>Local data storage</h3>
+              <p>Records are stored in this browser on this device.</p>
+            </div>
+
+            <span class="status-chip good">ON DEVICE</span>
+
+          </div>
+
+
+          <div class="panel setting-row">
+
+            <div>
+              <h3>External media uploads</h3>
+              <p>
+                This foundation does not upload selected media to an
+                IndieMark server.
+              </p>
+            </div>
+
+            <span class="status-chip good">NOT USED</span>
+
+          </div>
+
+
+          <div class="panel setting-row">
+
+            <div>
+              <h3>Export your records</h3>
+              <p>
+                Create a JSON backup before clearing browser data.
+              </p>
+            </div>
+
+            <button class="button secondary" id="settingsExport">
+              Export backup
+            </button>
+
+          </div>
+
+
+          <div class="panel danger-zone">
+
+            <div>
+              <h3>Delete local workspace data</h3>
+
+              <p>
+                Permanently remove recipients and distribution records saved
+                by this preview in this browser.
+              </p>
+            </div>
+
+            <button class="button danger" id="clearData">
+              Clear local data
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div class="legal-links">
+
+          <b>LEGAL & PRIVACY FRAMEWORK</b>
+
+          <p>
+            Privacy Policy · Terms of Service · Copyright & Ownership ·
+            Data Storage Policy · Security Disclosure · Cookies & Tracking
+          </p>
+
+          <small>
+            These policy pages must be completed and reviewed before public
+            production launch.
+          </small>
+
+        </div>
+
+      </section>
+
+
+      <footer class="footer">
+
+        <span>© 2026 IndieMark</span>
+
+        <span>EVERY COPY HAS AN IDENTITY.</span>
+
+        <span>LOCAL-FIRST PREVIEW</span>
+
+      </footer>
+
+    </main>
+
+  </div>
+
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="app.js"></script>
+
+</body>
+</html>
