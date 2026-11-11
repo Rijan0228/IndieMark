@@ -28,6 +28,9 @@ const bytes = (n) =>
       ? `${(n / 1024).toFixed(1)} KB`
       : `${(n / 1048576).toFixed(2)} MB`;
 
+const isWavFile = file =>
+  Boolean(file) && (/wav/i.test(file.type) || /\.wav$/i.test(file.name));
+
 
 /* --------------------------------------------------
    NOTIFICATIONS
@@ -740,10 +743,10 @@ async function createDistributionRecord() {
   let watermarkStatus = "not_supported";
   let watermarkedHash = null;
 
-  if (selectedMedia.type.startsWith("audio/") || /\.wav$/i.test(selectedMedia.name)) {
+  if (selectedMedia.type.startsWith("audio/") || isWavFile(selectedMedia)) {
     const core = globalThis.IndieMark?.WatermarkCore;
     const audioEngine = globalThis.IndieMark?.AudioEngine;
-    if (selectedMedia.type === "audio/wav" || /\.wav$/i.test(selectedMedia.name)) {
+    if (isWavFile(selectedMedia)) {
       if (!core || !audioEngine) {
         showToast("Audio engine did not load. Refresh and try again.");
         return;
@@ -898,7 +901,7 @@ $("analyzeSuspect").addEventListener("click", async () => {
     let recoveredMethod = null;
     let recoveryError = null;
 
-    if (suspectFile.type.startsWith("image/") || suspectFile.type === "audio/wav" || /\.wav$/i.test(suspectFile.name)) {
+    if (suspectFile.type.startsWith("image/") || isWavFile(suspectFile)) {
       try {
         const isWav = suspectFile.type === "audio/wav" || /\.wav$/i.test(suspectFile.name);
         const mediaEngine = isWav ? globalThis.IndieMark?.AudioEngine : globalThis.IndieMark?.ImageEngine;
