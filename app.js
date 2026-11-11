@@ -234,6 +234,15 @@ function setMedia(file) {
 
   $("fileInfo").textContent =
     `${file.name} · ${bytes(file.size)} · ${file.type || "Unknown format"}`;
+  const workerBridge = globalThis.IndieMarkModules?.Workers;
+  const mediaKind = file.type.startsWith("image/") ? "image" : file.type.startsWith("audio/") ? "audio" : file.type.startsWith("video/") ? "video" : null;
+  if (workerBridge && mediaKind) {
+    workerBridge.inspect(mediaKind, file).then(info => {
+      if (!info || selectedMedia !== file) return;
+      const detail = mediaKind === "image" ? `${info.width}×${info.height}` : info.note || info.container || "File inspected";
+      $("fileInfo").textContent = `${file.name} · ${bytes(file.size)} · ${detail}`;
+    }).catch(() => {});
+  }
 
   $("createRecord").disabled = false;
 
