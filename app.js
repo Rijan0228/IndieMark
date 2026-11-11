@@ -1028,24 +1028,37 @@ function labCanvasBlob(canvas, type = "image/png", quality) {
 
 async function labTransform(file, mode) {
   const bitmap = await createImageBitmap(file);
-  let sx=0, sy=0, sw=bitmap.width, sh=bitmap.height;
-  let width=bitmap.width, height=bitmap.height, type="image/png", quality;
-  if(mode==="resize"){width=Math.max(1,Math.round(bitmap.width*.75));height=Math.max(1,Math.round(bitmap.height*.75));}
-  if(mode==="crop"){sw=Math.max(1,Math.round(bitmap.width*.9));sh=Math.max(1,Math.round(bitmap.height*.9));sx=Math.floor((bitmap.width-sw)/2);sy=Math.floor((bitmap.height-sh)/2);width=sw;height=sh;}
-  if(mode==="jpeg"){type="image/jpeg";quality=.82;}
-  const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
-  const ctx=canvas.getContext("2d",{willReadFrequently:true});
-  if(!ctx){bitmap.close();throw new Error("Canvas is unavailable.");}
-  if(mode==="brightness")ctx.filter="brightness(1.12) contrast(1.04)";
-  if(mode==="grayscale")ctx.filter="grayscale(1)";
-  if(mode==="combined")ctx.filter="brightness(1.08) contrast(1.03)";
-  ctx.drawImage(bitmap,sx,sy,sw,sh,0,0,width,height);bitmap.close();
-  if(mode==="combined"){
-    const small=document.createElement("canvas");small.width=Math.max(1,Math.round(width*.8));small.height=Math.max(1,Math.round(height*.8));
-    small.getContext("2d").drawImage(canvas,0,0,small.width,small.height);
-    return labCanvasBlob(small,"image/jpeg",.82);
+  try {
+    let sx=0, sy=0, sw=bitmap.width, sh=bitmap.height;
+    let width=bitmap.width, height=bitmap.height, type="image/png", quality;
+    if(mode==="resize"){width=Math.max(1,Math.round(bitmap.width*.75));height=Math.max(1,Math.round(bitmap.height*.75));}
+    if(mode==="resize50"){width=Math.max(1,Math.round(bitmap.width*.5));height=Math.max(1,Math.round(bitmap.height*.5));}
+    if(mode==="crop"){sw=Math.max(1,Math.round(bitmap.width*.9));sh=Math.max(1,Math.round(bitmap.height*.9));sx=Math.floor((bitmap.width-sw)/2);sy=Math.floor((bitmap.height-sh)/2);width=sw;height=sh;}
+    if(mode==="jpeg"){type="image/jpeg";quality=.82;}
+    if(mode==="jpegLow"){type="image/jpeg";quality=.55;}
+    const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+    const ctx=canvas.getContext("2d",{willReadFrequently:true});
+    if(!ctx)throw new Error("Canvas is unavailable.");
+    if(mode==="brightness")ctx.filter="brightness(1.12) contrast(1.04)";
+    if(mode==="grayscale")ctx.filter="grayscale(1)";
+    if(mode==="blur")ctx.filter="blur(0.6px)";
+    if(mode==="combined")ctx.filter="brightness(1.08) contrast(1.03)";
+    if(mode==="flip") {
+      ctx.translate(width,0);
+      ctx.scale(-1,1);
+    }
+    ctx.drawImage(bitmap,sx,sy,sw,sh,0,0,width,height);
+    if(mode==="combined"){
+      const small=document.createElement("canvas");small.width=Math.max(1,Math.round(width*.8));small.height=Math.max(1,Math.round(height*.8));
+      const smallContext=small.getContext("2d");
+      if(!smallContext)throw new Error("Canvas is unavailable for the combined transformation.");
+      smallContext.drawImage(canvas,0,0,small.width,small.height);
+      return await labCanvasBlob(small,"image/jpeg",.82);
+    }
+    return await labCanvasBlob(canvas,type,quality);
+  } finally {
+    bitmap.close();
   }
-  return labCanvasBlob(canvas,type,quality);
 }
 
 function labCard(name, detail, state, note) {
@@ -1073,10 +1086,14 @@ $("runLab").addEventListener("click", async () => {
     const tests=[
       ["Lossless PNG re-export","Canvas re-render · PNG","png"],
       ["JPEG compression","JPEG · quality 82%","jpeg"],
+      ["Heavy JPEG compression","JPEG · quality 55%","jpegLow"],
       ["Image resizing","75% dimensions · PNG","resize"],
+      ["Strong downscale","50% dimensions · PNG","resize50"],
       ["Center crop","90% center crop · PNG","crop"],
+      ["Horizontal flip","Mirrored image · PNG","flip"],
       ["Brightness & contrast","Brightness 112% · contrast 104%","brightness"],
       ["Grayscale conversion","Grayscale filter · PNG","grayscale"],
+      ["Mild blur","0.6 px blur · PNG","blur"],
       ["Combined processing","Brightness · resize · JPEG","combined"]
     ];
     const cards=[];
