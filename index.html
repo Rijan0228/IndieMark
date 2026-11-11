@@ -141,9 +141,9 @@
 
             <p>
               IndieMark's workspace and local recordkeeping are ready.
-              Watermark embedding, recovery and online leak search are not
-              implemented yet. This preview will never pretend a file is
-              protected when it isn't.
+              Experimental PNG image watermarking and local recovery are now available.
+              Audio/video watermarking and online leak search are not
+              implemented. This prototype is not tamper-proof.
             </p>
           </div>
 
@@ -289,11 +289,11 @@
             <h1>Watermark Studio<span>.</span></h1>
 
             <p class="subheading">
-              Prepare a distribution record for an image, audio or video asset.
+              Embed an experimental watermark in PNG-compatible images, or create a metadata-only record for other media.
             </p>
           </div>
 
-          <span class="status-chip pending">ENGINE IN DEVELOPMENT</span>
+          <span class="status-chip pending">IMAGE ENGINE · EXPERIMENTAL</span>
 
         </div>
 
@@ -376,8 +376,8 @@
 
 
             <p class="fine-print">
-              Creating a record does not embed a watermark or alter your file.
-              That engine is a separate development phase.
+              PNG images receive an experimental watermark and download as a new PNG.
+              Audio and video currently create metadata-only records. Your source file is never overwritten.
             </p>
 
           </div>
@@ -416,11 +416,11 @@
               <span>✧</span>
 
               <div>
-                <b>Watermark engine not connected</b>
+                <b>Experimental PNG watermark engine</b>
 
                 <p>
-                  We will add and validate the image engine before enabling
-                  protected-copy export.
+                  PNG export embeds a recoverable prototype ID. Resizing,
+                  cropping, screenshots or lossy compression may destroy it.
                 </p>
               </div>
             </div>
@@ -444,7 +444,7 @@
             <h1>Leak Detector<span>.</span></h1>
 
             <p class="subheading">
-              Prepare a local investigation record and compare file hashes.
+              Try to recover an experimental image watermark, then compare exact file hashes.
             </p>
           </div>
 
@@ -497,9 +497,7 @@
 
 
           <p class="fine-print">
-            A matching file hash identifies an identical file, not a watermark.
-            Watermark recovery and online searching are not available in this
-            foundation.
+            A recovered ID links to a local distribution record; it does not prove who shared the file. Exact hashes only match identical files. Online searching is not available.
           </p>
 
         </div>
@@ -921,6 +919,8 @@
 
   <div class="toast" id="toast" role="status"></div>
 
+  <script src="engines/watermark-core.js"></script>
+  <script src="engines/image-engine.js"></script>
   <script src="app.js"></script>
 
 </body>
