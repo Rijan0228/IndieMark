@@ -1070,6 +1070,7 @@ $("runLab").addEventListener("click", async () => {
 
 
 async function exportData() {
+  try {
   const data = {
     product: "IndieMark",
     formatVersion: 1,
@@ -1103,6 +1104,11 @@ async function exportData() {
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 
   showToast("Backup exported");
+
+  } catch (error) {
+    console.error(error);
+    showToast("Backup export failed: " + (error.message || "Unknown error"));
+  }
 }
 
 $("exportBackup").addEventListener("click", exportData);
@@ -1115,8 +1121,9 @@ $("settingsExport").addEventListener("click", exportData);
 -------------------------------------------------- */
 
 $("clearData").addEventListener("click", async () => {
+  try {
   const confirmed = confirm(
-    "This permanently deletes all IndieMark records, recipients and investigation entries saved in this browser. Export a backup first if needed. Continue?"
+    "This permanently deletes all IndieMark records, recipients, investigations and saved protected copies in this browser. Export a backup first if needed. Continue?"
   );
 
   if (!confirmed) {
@@ -1133,6 +1140,11 @@ $("clearData").addEventListener("click", async () => {
   await refresh();
 
   showToast("Local workspace data cleared");
+
+  } catch (error) {
+    console.error(error);
+    showToast("Clear local data failed: " + (error.message || "Unknown error"));
+  }
 });
 
 
