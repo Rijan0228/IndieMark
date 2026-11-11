@@ -1458,3 +1458,6 @@ button {
 .quick-recipient input{min-width:0;flex:1}
 .field-hint{display:block;margin-top:7px;color:var(--muted,#8b929c);font-size:12px;line-height:1.5}
 @media(max-width:520px){.quick-recipient{align-items:stretch}.quick-recipient .button{white-space:nowrap}}
+
+.legal-links a{color:var(--accent,#a99bff);text-decoration:none}.legal-links a:hover{text-decoration:underline}
+.form-panel .button.full{display:flex;width:100%;min-height:48px;justify-content:center;margin-top:18px;position:relative;z-index:1}
