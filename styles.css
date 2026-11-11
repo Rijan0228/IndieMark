@@ -613,6 +613,35 @@ button {
 .panel-title h3,
 .form-panel h3,
 .detector-intro h3,
+
+/* RESILIENCE LAB INTERFACE */
+.lab-upload-panel{padding:23px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 22px;align-items:center;margin-bottom:28px}
+.lab-upload-copy h3{margin:7px 0;font:650 19px var(--display)}
+.lab-upload-copy p{max-width:720px;color:var(--muted);font-size:11px;line-height:1.7;margin:0}
+.lab-file-button{cursor:pointer}
+.lab-file-meta,.lab-baseline{color:var(--muted);font-size:10px;overflow-wrap:anywhere}
+.lab-baseline{grid-column:1/-1;padding:11px 13px;border:1px solid var(--line);border-radius:7px;background:#1b1d21}
+#runLab{justify-self:start}
+.lab-results-head{display:flex;justify-content:space-between;align-items:end;gap:15px;margin-bottom:13px}
+.lab-results-head h2{font:650 18px var(--display);margin:7px 0 0}
+.lab-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.lab-empty{grid-column:1/-1;padding:30px;text-align:center}
+.lab-empty b{display:block;margin-top:10px}
+.lab-empty p{color:var(--muted);font-size:11px}
+.lab-result-card{padding:16px;min-width:0}
+.lab-result-top{display:flex;justify-content:space-between;gap:12px;align-items:start}
+.lab-result-top b,.lab-result-top small{display:block}
+.lab-result-top b{font-size:12px}
+.lab-result-top small{color:var(--muted);font-size:9px;margin-top:4px}
+.lab-result-status{flex:none;font-size:8px;font-weight:800;letter-spacing:.8px}
+.lab-result-status.good{color:var(--green)}
+.lab-result-status.warn{color:#d7b276}
+.lab-result-status.bad{color:#d98787}
+.lab-result-card p{color:var(--muted);font-size:10px;line-height:1.6;margin:13px 0 0;overflow-wrap:anywhere}
+.lab-disclaimer{margin-top:18px;padding:20px}
+.lab-disclaimer .legend{margin-top:17px}
+.lab-disclaimer>.fine-print{margin-top:20px;line-height:1.7}
+
 .lab-main h3,
 .lab-side h3,
 .report-panel h3 {
@@ -1414,4 +1443,12 @@ button {
   .table-panel {
     overflow-x: auto;
   }
+}
+
+
+@media (max-width:760px){
+ .lab-upload-panel{grid-template-columns:1fr}
+ .lab-file-button,#runLab{width:100%}
+ .lab-results{grid-template-columns:1fr}
+ .lab-results-head{align-items:start;flex-direction:column}
 }
