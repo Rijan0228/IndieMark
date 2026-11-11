@@ -1,6 +1,5 @@
 
-/* IndieMark v0.1 — local-first workspace foundation.
-   No watermark is embedded or recovered in this version. */
+/* IndieMark — local-first media distribution and experimental watermark workspace. */
 
 const DB_NAME = "IndieMarkLocal";
 const DB_VERSION = 1;
@@ -756,7 +755,7 @@ $("createRecord").addEventListener("click", async () => {
   await put("records", record);
 
   if (exportedFile) {
-    const safeBaseName = (selectedMedia.name.replace(/\\.[^.]+$/, "") || "media")
+    const safeBaseName = (selectedMedia.name.replace(/\.[^.]+$/, "") || "media")
       .replace(/[^a-z0-9-_]+/gi, "-")
       .slice(0, 60);
 
@@ -991,19 +990,19 @@ $("runLab").addEventListener("click", async () => {
       ["Combined processing","Brightness · resize · JPEG","combined"]
     ];
     const cards=[];
+    let recoveredCount=0;
     for(let i=0;i<tests.length;i++){
       const [name,detail,mode]=tests[i];button.textContent=`Testing ${i+1} of ${tests.length}…`;
       try{
         const transformed=await labTransform(labFile,mode);
         const result=await engine.extract(transformed);
-        if(result.found&&result.payload?.id===id)cards.push(labCard(name,detail,"recovered","The baseline distribution ID was recovered."));
+        if(result.found&&result.payload?.id===id){recoveredCount++;cards.push(labCard(name,detail,"recovered","The baseline distribution ID was recovered."));}
         else if(result.found)cards.push(labCard(name,detail,"different","A payload was detected, but its ID did not match the baseline."));
         else cards.push(labCard(name,detail,"failed",result.reason||"No valid payload was recovered."));
       }catch(error){cards.push(labCard(name,detail,"failed",error.message||"Transformation or extraction failed."));}
       $("labResults").innerHTML=cards.join("");
     }
-    const count=cards.filter(card=>card.includes("RECOVERED")).length;
-    $("labSummary").textContent=`${count} of ${tests.length} transformations recovered the baseline ID`;
+    $("labSummary").textContent=`${recoveredCount} of ${tests.length} transformations recovered the baseline ID`;
     $("labStatus").textContent="TESTS COMPLETE";
   }catch(error){
     $("labBaseline").textContent="Test error: "+error.message;$("labStatus").textContent="TEST ERROR";showToast("Lab error: "+error.message);
